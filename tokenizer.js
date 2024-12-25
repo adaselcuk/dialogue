@@ -16,13 +16,15 @@ const tokenType = `
 
 	IDENTIFIER,
 	STRING,
+	NUMBER,
 
 	AND, OR,
-	IS, AM, ARE,
+	IS, // assignment 
+	AM, ARE, // equality
 	IF, ELSE, FOR, WHILE,
-	LISTEN, // assigning variables
-
+	LISTEN, // sort of like let
 	TELL, // print
+	GIVE, // return
 	SURELY, // true
 	IMPOSSIBLE, // false
 	EMPTINESS, // null
@@ -47,6 +49,7 @@ const keywords = {
 	while: tokenEnum.WHILE,
 	listen: tokenEnum.LISTEN,
 	tell: tokenEnum.TELL,
+	give: tokenEnum.GIVE,
 	surely: tokenEnum.SURELY,
 	impossible: tokenEnum.IMPOSSIBLE,
 	emptiness: tokenEnum.EMPTINESS,
@@ -146,15 +149,38 @@ class Scanner {
 			case ',': this.addToken(COMMA); break;
 			case '.': this.addToken(DOT); break;
 			case '—': this.addToken(EM_DASH); break;
+
 			// operators
 			case '!': this.addToken(this.#match('=') ? BANG_EQUAL : BANG); break;
 			case '=': this.addToken(this.#match('=') ? EQUAL_EQUAL : EQUAL); break;
 			case '<': this.addToken(this.#match('=') ? LESS_EQUAL : LESS); break;
 			case '>': this.addToken(this.#match('=') ? GREATER_EQUAL : GREATER); break;
+
+			// whitespace
+			case ' ':
+			case '\r':
+			case '\t':
+				// ignore whitespace
+				break;
+			case '\n':
+				this.line++;
+				break;
+			
+			// string literals
+			case '"': this.#handleStringLiterals(); break;
+
+
 			default:
+				if (this.#isAlpha(c)){
+					this.#identifier();
+				} else if (this.#isDigit(c)){
+					this.#handleNumberLiterals();
+				}
+				else {
+					Youth.error(this.line, 'I cannot understand this.');
+				}
 				// lexical error
 				// not stuck in an error loop because consumed by advance
-				Youth.error(this.line, 'Say something else!');
 				break;
 		}
 	}
@@ -171,7 +197,8 @@ class Scanner {
 	}
 
 	#match(expected){
-		// 
+		// conditional advance
+		// if next char is expected, consume it and return true
 		if (!this.#isAtEnd()) return false;
 		if (this.source[this.current] !== expected) return false;
 
@@ -179,5 +206,71 @@ class Scanner {
 		return true;
 	}
 
+	#identifier() {
+		while (this.#isAlphaNumeric(this.#peek())) this.#advance();
+		const text = this.source.substring(this.start, this.current);
+		if (text == 'aside:') {
+			// comment
+			while (this.#peek() !== '\n' && !this.#isAtEnd()) this.#advance();
+			return; 
+		} else {
+			const type = keywords[text] || tokenEnum.IDENTIFIER;
+			this.addToken(type);
+		}
+	}
+
+	#peek() {
+		// like advance but does not consume character
+		// lookahead
+		// returns next char in source
+		if (this.#isAtEnd()) return '\0';
+		return this.source[this.current];
+	}
+
+	#peekNext() {
+		// need this to look past decimal point
+		// dont want to consume . until sure there is digit after it
+		if (this.current + 1 >= this.length) return '\0';
+		return this.source[this.current + 1]; 
+	}
+
+	#handleStringLiterals() {
+		// allows for multi-line strings
+		while (this.#peek() != '"' && !this.#isAtEnd()){
+			if (this.#peek() == '\n') this.line++;
+			this.#advance();
+		}
+
+		if (this.#isAtEnd()){
+			Youth.error(this.line, 'this string keeps going onnnn and onnnn.');
+			return;
+		}
+
+		this.#advance();
+		const value = this.source.substring(this.start + 1, this.current - 1); // strips off quotes
+		this.addToken(STRING, value);
+	}
+
+	#handleNumberLiterals() {
+		while (this.#isDigit(this.#peek())) this.#advance();
+		if (this.#peek() == '.' && this.#isDigit(this.#peekNext())){
+			// consume the '.'
+			this.#advance();
+			while (this.#isDigit(this.#peek())) this.#advance();
+		}
+		// need parse to convert string to number
+		this.#addToken(NUMBER, parseFloat(this.source.substring(this.start, this.current)));
+
+	}
+
+	#isDigit (str) {
+		return /\d/.test(str);
+	}
+	#isAlpha (str) {
+		return /[a-zA-Z_]/.test(str);
+	} 
+	#isAlphaNumeric (str) {
+		return this.#isAlpha(str) || this.#isDigit(str);
+	}
 
 }
