@@ -7,7 +7,10 @@ const tokenType = `
 	DOT,
 	LEFT_PAREN,
 	RIGHT_PAREN,
-	EM_DASH,
+	EM_DASH, // negate a number for now - change when figure out what to do with it
+
+	// might change these later on:
+	MINUS, PLUS, SLASH, STAR, SEMICOLON,
 
 	EQUAL, EQUAL_EQUAL,
 	BANG, BANG_EQUAL,
@@ -65,6 +68,11 @@ const tokenMap = {
     '(': scanner => scanner.addToken(tokenEnum.LEFT_PAREN),
     ')': scanner => scanner.addToken(tokenEnum.RIGHT_PAREN),
     '—': scanner => scanner.addToken(tokenEnum.EM_DASH),
+	'+': scanner => scanner.addToken(tokenEnum.PLUS),
+	'-': scanner => scanner.addToken(tokenEnum.MINUS),
+	'*': scanner => scanner.addToken(tokenEnum.STAR),
+	'/': scanner => scanner.addToken(tokenEnum.SLASH),
+	';': scanner => scanner.addToken(tokenEnum.SEMICOLON),
     '=': scanner => scanner.addToken(tokenEnum.EQUAL),
     '==': scanner => scanner.addToken(tokenEnum.EQUAL_EQUAL),
     '!': scanner => scanner.addToken(tokenEnum.BANG),
@@ -274,3 +282,5 @@ class Scanner {
 	}
 
 }
+
+module.exports = { tokenEnum, Token };
