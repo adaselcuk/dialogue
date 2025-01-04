@@ -1,6 +1,8 @@
 class Expr {
   constructor() {
     if (new.target === Expr) {
+      // abstract class
+      // todo: change this error message later - ESOTERIC!!!
       throw new TypeError('Cannot instantiate Expr directly');
     }
   }
