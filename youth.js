@@ -2,6 +2,8 @@ import { error } from './errors.js';
 
 const fs = require('fs');
 const readline = require('readline');
+const { tokenEnum } = require('./tokenizer.js');
+const {AstPrinter} = require('./printer.js');
 
 
 class Youth {
@@ -11,24 +13,28 @@ class Youth {
 
 	run (source) {
 		const scanner = new Scanner(source);
-		try {
-			const tokens = scanner.scanTokens();
-			if (this.hadError){
-				// ensures not stuck in an error loop
-				this.hadError = false;
-				return;
-			}
-			// for now just prints tokens
-			console.log(tokens);
-		} catch (e) {
-			this.hadError = true;
-			console.error(e.message);
-		}
+		const tokens = scanner.scanTokens();
+
+		const parser = new Parser(tokens);
+		const expression = parser.parse();
+
+		if (hadError) return;
+
+		console.log(new AstPrinter().print(expression));
 	}
 
-	error (line, msg) {
-		this.hadError = true;
-		throw error(msg, line);
+	report (line, where, msg) {
+		// good practice to separate error generating and error reporting
+		new Error(`I'm sorry, but you should have seen this coming: ${line}${where}: ${msg}`);
+		hadError = true;
+	}
+
+	error (token, msg) {
+		if (token.type === tokenEnum.EOF){
+			report(token.line, " at end", msg);
+		} else {
+			report(token.line, ` at '${token.lexeme}'`, msg);
+		}
 		
 	}
 

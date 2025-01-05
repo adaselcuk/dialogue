@@ -30,12 +30,64 @@ class Interpreter extends Visitor {
 		switch (expr.operator.type){
 			case tokenEnum.MINUS:
 				// would i do 'MINUS' or tokenEnum.MINUS?
+				checkNumberOperand(expr.operator, right);
 				return -right;
 			case tokenEnum.BANG:
 				return !this.#isTruthy(right);
 		}
 
 		return null;
+	}
+
+	checkNumberOperand(operator, operand){
+		if (typeof operand === 'number') return;
+		throw new RuntimeError(operator, 'Operand must be a number');
+	}
+
+	#isTruthy(object){
+		if (object == null) return false;
+		if (typeof object === 'boolean') return object;
+		return true;
+	}
+
+	visitBinaryExpr(expr){
+		const left = evaluate(expr.left);
+		const right = evaluate(expr.right);
+
+		switch (expr.operator.type){
+			case tokenEnum.MINUS:
+				return left - right;
+			case tokenEnum.SLASH:
+				return left / right;
+			case tokenEnum.STAR:
+				return left * right;
+			case tokenEnum.PLUS:
+				// operator overload
+				if (typeof left === 'number' && typeof right === 'number') return left + right;
+				if (typeof left === 'string' && typeof right === 'string') return left + right;
+				break;
+			case tokenEnum.GREATER:
+				return left > right;
+			case tokenEnum.GREATER_EQUAL:
+				return left >= right;
+			case tokenEnum.LESS:
+				return left < right;
+			case tokenEnum.LESS_EQUAL:
+				return left <= right;
+			case tokenEnum.BANG_EQUAL:
+				return !this.#isEqual(left, right);
+			case tokenEnum.EQUAL_EQUAL:
+				return this.#isEqual(left, right);
+		}
+
+		return null;
+	}
+
+	#isEqual(a, b){
+		if (a === null && b === null) return true;
+		if (a === null) return false;
+		
+		return a === b;
 	}
 
 }

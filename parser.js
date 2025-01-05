@@ -5,22 +5,174 @@
 // trees enable the parser and interpreter to work together
 // no associated behaviour
 
-class Expr {
-	constructor() {
-		if (new.target === Expr) {
-			// abstract class
-			// TODO: change this error message later
-			throw new TypeError('Cannot instantiate Expr directly');
+const { tokenEnum } = require('./tokenizer');
+const { error } = require('./errors');
+const { Youth } = require('./youth');
+
+class Parser {
+
+	#ParseError = class ParseError extends RuntimeException {}
+
+	#tokens;
+	#current = 0;
+
+	constructor(tokens){
+		this.tokens = tokens;
+	}
+
+	parse(){
+		try {
+			return this.#expression();
+		} catch (e) {
+			return null;
 		}
 	}
-}
 
-class Binary extends Expr {
-	constructor (left, operator, right) {
-		// left is Expr, operator is Token, right is Expr
-		// can make them private to prevent modification?? 
-		this.left = left;
-		this.operator = operator;
-		this.right = right;
+	#expression() {
+		return this.#equality();
+	}
+
+	#equality(){
+		let expr = this.#comparison();
+
+		while (this.#match(tokenEnum.BANG_EQUAL, tokenEnum.EQUAL_EQUAL)){
+			const operator = this.#previous();
+			const right = this.#comparison();
+			expr = new Binary(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	#match(...types){
+		for (let type of types){
+			if (this.#check(type)){
+				this.#advance();
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	#check(type){
+		if (this.#isAtEnd()) return false;
+		return this.#peek().type === type;
+	}
+
+	#advance(){
+		if (!this.#isAtEnd()) this.#current++;
+		return this.#previous();
+	}
+
+	#isAtEnd(){
+		return this.#peek().type === tokenEnum.EOF;
+	}
+
+	#peek(){
+		return this.#tokens[this.#current];
+	}
+
+	#previous(){
+		return this.#tokens[this.#current - 1];
+	}
+
+	#comparison(){
+		let expr = this.#term();
+
+		while (this.#match(tokenEnum.GREATER, tokenEnum.GREATER_EQUAL, tokenEnum.LESS, tokenEnum.LESS_EQUAL)){
+			const operator = this.#previous();
+			const right = this.#term();
+			expr = new Binary(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	#term(){
+		let expr = this.#factor();
+
+		while (this.#match(tokenEnum.MINUS, tokenEnum.PLUS)){
+			const operator = this.#previous();
+			const right = this.#factor();
+			expr = new Binary(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	#factor(){
+		let expr = this.#unary();
+
+		while (this.#match(tokenEnum.SLASH, tokenEnum.STAR)){
+			const operator = this.#previous();
+			const right = this.#unary();
+			expr = new Binary(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	#unary(){
+		if (this.#match(tokenEnum.BANG, tokenEnum.MINUS)){
+			const operator = this.#previous();
+			const right = this.#unary();
+			return new Unary(operator, right);
+		}
+
+		return this.#primary();
+	}
+
+	#primary(){
+		if (this.#match(tokenEnum.FALSE)) return new Literal(false);
+		if (this.#match(tokenEnum.TRUE)) return new Literal(true);
+		if (this.#match(tokenEnum.NIL)) return new Literal(null);
+
+		if (this.#match(tokenEnum.NUMBER, tokenEnum.STRING)){
+			return new Literal(this.#previous().literal);
+		}
+
+		if (this.#match(tokenEnum.LEFT_PAREN)){
+			const expr = this.#expression();
+			this.#consume(tokenEnum.RIGHT_PAREN, 'Expect ")" after expression.');
+			return new Grouping(expr);
+		}
+
+		throw this.#error(this.#peek(), 'Expect expression.');
+	}
+
+	#consume(type, message){
+		if (this.#check(type)) return this.#advance();
+		throw this.#error(this.#peek(), message);
+	}
+
+	#error(token, message){
+		Youth.error(token, message);
+		return new ParseError();
+	}
+
+	#synchronize(){
+		this.#advance();
+
+		while (!this.#isAtEnd()){
+			if (this.#previous().type === tokenEnum.SEMICOLON) return;
+
+			switch (this.#peek().type){
+				case tokenEnum.ARE:
+					// class declaration
+				case tokenEnum.IS:
+					// declaration
+				case tokenEnum.FOR:
+				case tokenEnum.IF:
+				case tokenEnum.WHILE:
+				case tokenEnum.TELL:
+					// print
+				case tokenEnum.GIVE:
+					// return
+					return;
+			}
+
+			this.#advance();
+		}
 	}
 }
