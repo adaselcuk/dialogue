@@ -24,7 +24,7 @@ const tokenType = `
 	AND, OR,
 	IS, // assignment 
 	AM, // equality
-	ARE, // class declaration
+	TOGETHER, // class declaration
 	IF, ELSE, FOR, WHILE,
 	LISTEN, // sort of like let
 	TELL, // print
@@ -46,7 +46,7 @@ const keywords = {
 	or: tokenEnum.OR,
 	is: tokenEnum.IS,
 	am: tokenEnum.AM,
-	are: tokenEnum.ARE,
+	together: tokenEnum.TOGETHER,
 	if: tokenEnum.IF,
 	else: tokenEnum.ELSE,
 	for: tokenEnum.FOR,
@@ -59,7 +59,6 @@ const keywords = {
 	emptiness: tokenEnum.EMPTINESS,
 	not: tokenEnum.NOT,
 	new: tokenEnum.NEW,
-	group: tokenEnum.GROUP,
 	eof: tokenEnum.EOF
 }
 

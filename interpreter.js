@@ -1,5 +1,6 @@
 const { Visitor } = require('./Expr.js');
 const { tokenEnum } = require('./tokenizer.js');
+const { RuntimeError } = require('./RuntimeError.js');
 
 class Interpreter extends Visitor {
 	// need to define visit methods for all expression types
@@ -7,6 +8,15 @@ class Interpreter extends Visitor {
 		super();
 	} 
 
+	checkNumberOperand(operator, operand){
+		if (typeof operand === 'number') return;
+		throw new RuntimeError(operator, 'Operand must be a number');
+	}
+
+	checkNumberOperands(operator, left, right){
+		if (typeof left === 'number' && typeof right === 'number') return;
+		throw new RuntimeError(operator, 'Operands must be numbers');
+	}
 	visitLiteralExpr(expr){
 		// a literal is a bit of syntax that produces a value
 		// literal comes from parser's domain
@@ -39,11 +49,6 @@ class Interpreter extends Visitor {
 		return null;
 	}
 
-	checkNumberOperand(operator, operand){
-		if (typeof operand === 'number') return;
-		throw new RuntimeError(operator, 'Operand must be a number');
-	}
-
 	#isTruthy(object){
 		if (object == null) return false;
 		if (typeof object === 'boolean') return object;
@@ -56,23 +61,30 @@ class Interpreter extends Visitor {
 
 		switch (expr.operator.type){
 			case tokenEnum.MINUS:
+				checkNumberOperands(expr.operator, left, right);
 				return left - right;
 			case tokenEnum.SLASH:
+				checkNumberOperands(expr.operator, left, right);
 				return left / right;
 			case tokenEnum.STAR:
+				checkNumberOperands(expr.operator, left, right);
 				return left * right;
 			case tokenEnum.PLUS:
 				// operator overload
 				if (typeof left === 'number' && typeof right === 'number') return left + right;
 				if (typeof left === 'string' && typeof right === 'string') return left + right;
-				break;
+				throw new RuntimeError(expr.operator, 'Operands must be two numbers or two strings');
 			case tokenEnum.GREATER:
+				checkNumberOperands(expr.operator, left, right);
 				return left > right;
 			case tokenEnum.GREATER_EQUAL:
+				checkNumberOperands(expr.operator, left, right);
 				return left >= right;
 			case tokenEnum.LESS:
+				checkNumberOperands(expr.operator, left, right);
 				return left < right;
 			case tokenEnum.LESS_EQUAL:
+				checkNumberOperands(expr.operator, left, right);
 				return left <= right;
 			case tokenEnum.BANG_EQUAL:
 				return !this.#isEqual(left, right);
@@ -88,6 +100,26 @@ class Interpreter extends Visitor {
 		if (a === null) return false;
 		
 		return a === b;
+	}
+
+	#stringify(object){
+		if (object === null) return 'emptiness';
+
+		if (typeof object === 'number'){
+			let text = object.toString();
+			if (text.endsWith('.0')) text = text.substring(0, text.length - 2);
+			return text;
+		}
+		return object.toString();
+	}
+
+	interpret(expression){
+		try {
+			const value = this.#evaluate(expression);
+			console.log(this.#stringify(value));
+		} catch (error) {
+			Youth.runtimeError(error); // implement runtimeError method
+		}
 	}
 
 }

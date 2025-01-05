@@ -158,7 +158,7 @@ class Parser {
 			if (this.#previous().type === tokenEnum.SEMICOLON) return;
 
 			switch (this.#peek().type){
-				case tokenEnum.ARE:
+				case tokenEnum.TOGETHER:
 					// class declaration
 				case tokenEnum.IS:
 					// declaration
