@@ -8,6 +8,8 @@
 const { tokenEnum } = require('./tokenizer');
 const { error } = require('./errors');
 const { Youth } = require('./youth');
+const { Stmt } = require('./Stmt.js');
+const { Expr } = require('./Expr.js');
 
 class Parser {
 
@@ -21,15 +23,33 @@ class Parser {
 	}
 
 	parse(){
-		try {
-			return this.#expression();
-		} catch (e) {
-			return null;
+		let statements = [];
+		while (!this.#isAtEnd()){
+			statements.push(this.#statement());
 		}
+
+		return statements;
 	}
 
 	#expression() {
 		return this.#equality();
+	}
+
+	#statement() {
+		if (this.#match(tokenEnum.TELL)) return this.#printStatement();
+		return this.#expressionStatement();
+	}
+
+	#printStatement() {
+		const value = this.#expression();
+		this.#consume(tokenEnum.SEMICOLON, 'Expect ";" after value.');
+		return new Stmt.Print(value);
+	}
+
+	#expressionStatement() {
+		const expr = this.#expression();
+		this.#consume(tokenEnum.SEMICOLON, 'Expect ";" after expression.');
+		return new Stmt.Expression(expr);
 	}
 
 	#equality(){

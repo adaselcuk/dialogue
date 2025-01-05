@@ -1,12 +1,40 @@
 const { Visitor } = require('./Expr.js');
 const { tokenEnum } = require('./tokenizer.js');
 const { RuntimeError } = require('./RuntimeError.js');
+const { Visitor: ExprVisitor } = require('./Expr.js');
+const { Visitor: StmtVisitor } = require('./Stmt.js');
 
-class Interpreter extends Visitor {
+class Interpreter extends Expr.Visitor, Stmt.Visitor {
 	// need to define visit methods for all expression types
 	constructor() {
 		super();
 	} 
+
+	#evaluate(expr){
+		return expr.accept(this);
+	}
+
+	#execute(stmt){
+		return stmt.accept(this);
+	}
+
+	#isEqual(a, b){
+		if (a === null && b === null) return true;
+		if (a === null) return false;
+		
+		return a === b;
+	}
+
+	#stringify(object){
+		if (object === null) return 'emptiness';
+
+		if (typeof object === 'number'){
+			let text = object.toString();
+			if (text.endsWith('.0')) text = text.substring(0, text.length - 2);
+			return text;
+		}
+		return object.toString();
+	}
 
 	checkNumberOperand(operator, operand){
 		if (typeof operand === 'number') return;
@@ -27,10 +55,6 @@ class Interpreter extends Visitor {
 		// grouping - the node you get when you have a parenthesized expression
 		return this.#evaluate(expr.expression);
 		// repeatedly evaluate the expression until you get a value
-	}
-
-	#evaluate(expr){
-		return expr.accept(this);
 	}
 
 	visitUnaryExpr(expr){
@@ -95,28 +119,22 @@ class Interpreter extends Visitor {
 		return null;
 	}
 
-	#isEqual(a, b){
-		if (a === null && b === null) return true;
-		if (a === null) return false;
-		
-		return a === b;
+	visitExpressionStmt(stmt){
+		this.#evaluate(stmt.expression);
+		return null;
 	}
 
-	#stringify(object){
-		if (object === null) return 'emptiness';
-
-		if (typeof object === 'number'){
-			let text = object.toString();
-			if (text.endsWith('.0')) text = text.substring(0, text.length - 2);
-			return text;
-		}
-		return object.toString();
+	visitPrintStmt(stmt){
+		const value = this.#evaluate(stmt.expression);
+		console.log(this.#stringify(value));
+		return null;
 	}
 
 	interpret(expression){
 		try {
-			const value = this.#evaluate(expression);
-			console.log(this.#stringify(value));
+			for (let statement of expression){
+				this.#execute(statement);
+			}
 		} catch (error) {
 			Youth.runtimeError(error); // implement runtimeError method
 		}

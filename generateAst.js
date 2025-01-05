@@ -9,10 +9,16 @@ function main(args) {
 	const outputDir = args[0];
 
 	defineAst(outputDir, "Expr", [
-		"Binary   : Expr left, Token operator, Expr right",
-		"Grouping : Expr expression",
-		"Literal  : Object value",
-		"Unary    : Token operator, Expr right"
+		"Binary   : left, operator, right",
+		"Grouping : expression",
+		"Literal  : value",
+		"Unary    : operator, right"
+		
+	]);
+
+	defineAst(outputDir, "Stmt", [
+		"Expression : expression",
+		"Print      : expression"
 	]);
 }
 
