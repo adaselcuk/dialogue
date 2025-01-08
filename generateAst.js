@@ -12,13 +12,15 @@ function main(args) {
 		"Binary   : left, operator, right",
 		"Grouping : expression",
 		"Literal  : value",
-		"Unary    : operator, right"
+		"Unary    : operator, right",
+		"Variable : name"
 		
 	]);
 
 	defineAst(outputDir, "Stmt", [
 		"Expression : expression",
-		"Print      : expression"
+		"Print      : expression",
+		"Var		: name, initializer"
 	]);
 }
 

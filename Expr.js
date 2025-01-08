@@ -6,6 +6,10 @@ class Expr {
       throw new TypeError('Cannot instantiate Expr directly');
     }
   }
+
+  accept(visitor){
+    throw new Error('accept() method must be implemented');
+  }
 }
 
 class Visitor {
@@ -13,6 +17,7 @@ class Visitor {
   visitGroupingExpr(expr) {}
   visitLiteralExpr(expr) {}
   visitUnaryExpr(expr) {}
+  visitVariableExpr(expr) {}
 }
 
 class Binary extends Expr {
@@ -60,5 +65,16 @@ class Unary extends Expr {
   }
 }
 
+class Variable extends Expr {
+  constructor(name){
+    super();
+    this.name = name;
+  }
 
-module.exports = { Expr, Visitor, Binary, Grouping, Literal, Unary };
+  accept(visitor){
+    return visitor.visitVariableExpr(this);
+  }
+}
+
+
+module.exports = { Expr, Visitor, Binary, Grouping, Literal, Unary, Variable };

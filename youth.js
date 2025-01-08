@@ -68,12 +68,12 @@ class Youth {
 		const tokens = scanner.scanTokens();
 
 		const parser = new Parser(tokens);
-		const expression = parser.parse();
+		const statements = parser.parse();
 
 		if (this.hadError) return;
 		if (this.hadRuntimeError) return;
 
-		this.#interpreter.interpret(expression);
+		this.#interpreter.interpret(statements);
 	}
 
 	report (line, where, msg) {

@@ -25,10 +25,34 @@ class Parser {
 	parse(){
 		let statements = [];
 		while (!this.#isAtEnd()){
-			statements.push(this.#statement());
+			statements.push(this.#declaration());
 		}
 
 		return statements;
+	}
+
+	#declaration(){
+		try {
+			if (this.#match(typeEnum.IS)) return this.#varDeclaration();
+
+			return this.#statement;
+		} catch (error) {
+			this.#synchronize();
+			return null;
+		}
+	}
+
+	#varDeclaration(){
+		const name = this.#consume(tokenEnum.IDENTIFIER, "Expect identifier name");
+
+		let initializer = null;
+		// TODO : CHECK IF THERE IS TOKENENUM EQUAL IN BOOK??
+		if (this.#match(tokenEnum.EQUAL)) {
+			initializer = this.#expression();
+		}
+
+		this.#consume(tokenEnum.SEMICOLON, "Expect semicolon (';') after declaration");
+		return new Stmt.Var(name, initializer);
 	}
 
 	#expression() {
