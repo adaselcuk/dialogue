@@ -3,6 +3,7 @@ const { tokenEnum } = require('./tokenizer.js');
 const { RuntimeError } = require('./RuntimeError.js');
 const { Visitor: ExprVisitor } = require('./Expr.js');
 const { Visitor: StmtVisitor } = require('./Stmt.js');
+const { Environment } = require('./environment.js');
 
 const creator = (Base, Mixin) => Mixin(Base);
 const extender = (...Mixins) => Mixins.reduce(creator, class {});
@@ -75,9 +76,24 @@ const ExprVisitorMixin = (Base) => class extends Base {
 
 		return null;
 	}
+
+	visitVariableExpr(expr){
+		return this.environment.get(expr.name);
+	}
+
+	visitAssignExpr(expr){
+		const value = this.evaluate(expr.value);
+		this.environment.assign(expr.name, value);
+		return value;
+	}
 }
 
 const StmtVisitorMixin = (Base) => class extends Base {
+	visitBlockStmt(stmt){
+		this.executeBlock(stmt.statements, new Environment(this.environment));
+		return null;
+	}
+
 	visitExpressionStmt(stmt){
 		this.evaluate(stmt.expression);
 		return null;
@@ -88,12 +104,21 @@ const StmtVisitorMixin = (Base) => class extends Base {
 		console.log(this.stringify(value));
 		return null;
 	}
+
+	visitVarStmt(stmt){
+		let value = null;
+		if (stmt.initializer !== null) value = this.evaluate(stmt.initializer);
+		this.environment.define(stmt.name.lexeme, value);
+		return null;
+	}
 }
 
 class Interpreter extends extender(ExprVisitor, StmtVisitor) {
-	// need to define visit methods for all expression types
+	environment;
+
 	constructor() {
 		super();
+		this.environment = new Environment();
 	} 
 
 	evaluate(expr){
@@ -102,6 +127,19 @@ class Interpreter extends extender(ExprVisitor, StmtVisitor) {
 
 	execute(stmt){
 		return stmt.accept(this);
+	}
+
+	executeBlock(statements, environment){
+		const previous = this.environment;
+		try {
+			this.environment = environment;
+
+			for (const statement of statements){
+				this.execute(statement);
+			}
+		} finally {
+			this.environment = previous;
+		}
 	}
 
 	isEqual(a, b){

@@ -11,9 +11,21 @@ class Stmt {
 }
 
 class Visitor {
+  visitBlockStmt(stmt) {}
   visitExpressionStmt(stmt) {}
   visitPrintStmt(stmt) {}
   visitVarStmt(stmt) {}
+}
+
+class Block extends Stmt {
+  constructor(statements) {
+    super();
+    this.statements = statements;
+  }
+
+  accept(visitor) {
+    return visitor.visitBlockStmt(this);
+  }
 }
 
 class Expression extends Stmt {

@@ -13,11 +13,24 @@ class Expr {
 }
 
 class Visitor {
+  visitAssignExpr(expr) {}
   visitBinaryExpr(expr) {}
   visitGroupingExpr(expr) {}
   visitLiteralExpr(expr) {}
   visitUnaryExpr(expr) {}
   visitVariableExpr(expr) {}
+}
+
+class Assign extends Expr {
+  constructor(name, value){
+    super();
+    this.name = name;
+    this.value = value;
+  }
+
+  accept(visitor){
+    return visitor.visitAssignExpr(this);
+  }
 }
 
 class Binary extends Expr {
@@ -77,4 +90,4 @@ class Variable extends Expr {
 }
 
 
-module.exports = { Expr, Visitor, Binary, Grouping, Literal, Unary, Variable };
+module.exports = { Expr, Visitor, Binary, Grouping, Literal, Unary, Variable, Assign };

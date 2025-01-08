@@ -56,11 +56,14 @@ class Parser {
 	}
 
 	#expression() {
-		return this.#equality();
+		return this.#assignment();
 	}
 
 	#statement() {
 		if (this.#match(tokenEnum.TELL)) return this.#printStatement();
+
+		// IN BOOK THEY USE LEFT BRACE
+		if (this.#match(tokenEnum.LEFT_PAREN)) return new Stmt.Block(this.#block());
 		return this.#expressionStatement();
 	}
 
@@ -74,6 +77,37 @@ class Parser {
 		const expr = this.#expression();
 		this.#consume(tokenEnum.SEMICOLON, 'Expect ";" after expression.');
 		return new Stmt.Expression(expr);
+	}
+
+	#block() {
+		const statements = [];
+
+		// IN BOOK RIGHT BRACE NOT RIGHT PAREN
+		while (!this.#check(tokenEnum.RIGHT_PAREN) && !this.#isAtEnd()){
+			statements.push(this.#declaration());
+		}
+
+		// IN BOOK THEY USE RIGHT BRACE
+		this.#consume(tokenEnum.RIGHT_PAREN, 'Expect ")" after block.');
+		return statements;
+	}
+
+	#assignment() {
+		let expr = this.#equality();
+
+		if (this.#match(tokenEnum.EQUAL)) {
+			const equals = this.#previous();
+			const value = this.#assignment();
+
+			if (expr instanceof Expr.Variable){
+				const name = expr.name;
+				return new Expr.Assign(name, value);
+			}
+
+			this.#error(equals, 'Invalid assignment target.');
+		}
+
+		return expr;
 	}
 
 	#equality(){
@@ -174,6 +208,10 @@ class Parser {
 
 		if (this.#match(tokenEnum.NUMBER, tokenEnum.STRING)){
 			return new Literal(this.#previous().literal);
+		}
+
+		if (this.#match(tokenEnum.IDENTIFIER)) {
+			return new Expr.Variable(this.#previous());
 		}
 
 		if (this.#match(tokenEnum.LEFT_PAREN)){
