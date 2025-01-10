@@ -15,6 +15,7 @@ class Expr {
 class Visitor {
   visitAssignExpr(expr) {}
   visitBinaryExpr(expr) {}
+  visitCallExpr(expr) {}
   visitGroupingExpr(expr) {}
   visitLiteralExpr(expr) {}
   visitLogicalExpr(expr) {}
@@ -43,6 +44,19 @@ class Binary extends Expr {
   }
   accept(visitor) {
     return visitor.visitBinaryExpr(this);
+  }
+}
+
+class Call extends Expr {
+  constructor(callee, paren, args){
+    super();
+    this.callee = callee;
+    this.paren = paren;
+    this.args = args;
+  }
+
+  accept(visitor){
+    return visitor.visitCallExpr(this);
   }
 }
 
@@ -102,5 +116,14 @@ class Variable extends Expr {
   }
 }
 
+Expr.Variable = Variable;
+Expr.Assign = Assign;
+Expr.Binary = Binary;
+Expr.Call = Call;
+Expr.Grouping = Grouping;
+Expr.Literal = Literal;
+Expr.Logical = Logical;
+Expr.Unary = Unary;
 
-module.exports = { Expr, Visitor, Binary, Logical, Grouping, Literal, Unary, Variable, Assign };
+
+module.exports = { Expr, Visitor };

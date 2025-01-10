@@ -8,8 +8,8 @@
 const { tokenEnum } = require('./tokenizer');
 const { error } = require('./errors');
 const { Youth } = require('./youth');
-const { Stmt } = require('./Stmt.js');
-const { Expr } = require('./Expr.js');
+const { Stmt, Visitor } = require('./Stmt.js');
+const { Expr, Visitor} = require('./Expr.js');
 
 class Parser {
 
@@ -33,6 +33,7 @@ class Parser {
 
 	#declaration(){
 		try {
+			if (this.#match(tokenEnum.LISTEN)) return this.#function('function');
 			if (this.#match(typeEnum.IS)) return this.#varDeclaration();
 
 			return this.#statement;
@@ -134,6 +135,29 @@ class Parser {
 		return new Stmt.Expression(expr);
 	}
 
+	#function(kind){
+		const name = this.#consume(tokenEnum.IDENTIFIER, `Expect ${kind} name.`);
+		this.#consume(tokenEnum.LEFT_PAREN, `Expect "(" after ${kind} name.`);
+		const parameters = [];
+
+		if (!this.#check(tokenEnum.RIGHT_PAREN)){
+			do {
+				if (parameters.length >= 255){
+					this.#error(this.#peek(), 'Cannot have more than 255 parameters.');
+				}
+
+				parameters.push(this.#consume(tokenEnum.IDENTIFIER, 'Expect parameter name.'));
+			} while (this.#match(tokenEnum.COMMA));
+		}
+
+		this.#consume(tokenEnum.RIGHT_PAREN, 'Expect ")" after parameters.');
+
+		// DO NOT HAVE LEFT BRACE IN YOUTH LANGUAGE - FIX THIS LATER
+		this.#consume(tokenEnum.LEFT_BRACE, `Expect "{" before ${kind} body.`);
+		const body = this.#block();
+		return new Stmt.Function(name, parameters, body);
+	}
+
 	#whileStatement() {
 		this.#consume(tokenEnum.LEFT_PAREN, 'Expect "(" after "while".');
 		const condition = this.#expression();
@@ -180,7 +204,7 @@ class Parser {
 		while (this.#match(tokenEnum.OR)){
 			const operator = this.#previous();
 			const right = this.#and();
-			expr = new Logical(expr, operator, right);
+			expr = new Expr.Logical(expr, operator, right);
 		}
 
 		return expr;
@@ -192,7 +216,7 @@ class Parser {
 		while (this.#match(tokenEnum.AND)){
 			const operator = this.#previous();
 			const right = this.#equality();
-			expr = new Logical(expr, operator, right);
+			expr = new Expr.Logical(expr, operator, right);
 		}
 
 		return expr;
@@ -204,7 +228,7 @@ class Parser {
 		while (this.#match(tokenEnum.BANG_EQUAL, tokenEnum.EQUAL_EQUAL)){
 			const operator = this.#previous();
 			const right = this.#comparison();
-			expr = new Binary(expr, operator, right);
+			expr = new Expr.Binary(expr, operator, right);
 		}
 
 		return expr;
@@ -249,7 +273,7 @@ class Parser {
 		while (this.#match(tokenEnum.GREATER, tokenEnum.GREATER_EQUAL, tokenEnum.LESS, tokenEnum.LESS_EQUAL)){
 			const operator = this.#previous();
 			const right = this.#term();
-			expr = new Binary(expr, operator, right);
+			expr = new Expr.Binary(expr, operator, right);
 		}
 
 		return expr;
@@ -261,7 +285,7 @@ class Parser {
 		while (this.#match(tokenEnum.MINUS, tokenEnum.PLUS)){
 			const operator = this.#previous();
 			const right = this.#factor();
-			expr = new Binary(expr, operator, right);
+			expr = new Expr.Binary(expr, operator, right);
 		}
 
 		return expr;
@@ -273,7 +297,7 @@ class Parser {
 		while (this.#match(tokenEnum.SLASH, tokenEnum.STAR)){
 			const operator = this.#previous();
 			const right = this.#unary();
-			expr = new Binary(expr, operator, right);
+			expr = new Expr.Binary(expr, operator, right);
 		}
 
 		return expr;
@@ -283,19 +307,51 @@ class Parser {
 		if (this.#match(tokenEnum.BANG, tokenEnum.MINUS)){
 			const operator = this.#previous();
 			const right = this.#unary();
-			return new Unary(operator, right);
+			return new Expr.Unary(operator, right);
 		}
 
-		return this.#primary();
+		return this.#call();
+	}
+
+	#finishCall(callee){
+		const args = [];
+
+		if (!this.#check(tokenEnum.RIGHT_PAREN)){
+			do {
+				// only need this for part 3 simplification though:
+				if (args.length >= 255){
+					this.#error(this.#peek(), 'Cannot have more than 255 arguments.');
+				}
+				args.push(this.#expression());
+			} while (this.#match(tokenEnum.COMMA));
+		}
+
+		const paren = this.#consume(tokenEnum.RIGHT_PAREN, 'Expect ")" after arguments.');
+
+		return new Expr.Call(callee, paren, args);
+	}
+
+	#call(){
+		let expr = this.#primary();
+
+		while (true){
+			if (this.#match(tokenEnum.LEFT_PAREN)){
+				expr = this.#finishCall(expr);
+			} else {
+				break;
+			}
+		}
+
+		return expr;
 	}
 
 	#primary(){
-		if (this.#match(tokenEnum.FALSE)) return new Literal(false);
-		if (this.#match(tokenEnum.TRUE)) return new Literal(true);
-		if (this.#match(tokenEnum.NIL)) return new Literal(null);
+		if (this.#match(tokenEnum.FALSE)) return new Expr.Literal(false);
+		if (this.#match(tokenEnum.TRUE)) return new Expr.Literal(true);
+		if (this.#match(tokenEnum.NIL)) return new Expr.Literal(null);
 
 		if (this.#match(tokenEnum.NUMBER, tokenEnum.STRING)){
-			return new Literal(this.#previous().literal);
+			return new Expr.Literal(this.#previous().literal);
 		}
 
 		if (this.#match(tokenEnum.IDENTIFIER)) {
@@ -305,7 +361,7 @@ class Parser {
 		if (this.#match(tokenEnum.LEFT_PAREN)){
 			const expr = this.#expression();
 			this.#consume(tokenEnum.RIGHT_PAREN, 'Expect ")" after expression.');
-			return new Grouping(expr);
+			return new Expr.Grouping(expr);
 		}
 
 		throw this.#error(this.#peek(), 'Expect expression.');

@@ -26,7 +26,7 @@ const tokenType = `
 	AM, // equality
 	TOGETHER, // class declaration
 	IF, ELSE, FOR, WHILE,
-	LISTEN, // sort of like let
+	LISTEN, // function declaration
 	TELL, // print
 	GIVE, // return
 	SURELY, // true
@@ -284,4 +284,4 @@ class Scanner {
 
 }
 
-module.exports = { tokenEnum, Token };
+module.exports = { tokenEnum, Token, Scanner };

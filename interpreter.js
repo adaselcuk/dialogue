@@ -1,9 +1,10 @@
-const { Visitor } = require('./Expr.js');
+const { Expr, Visitor } = require('./Expr.js');
 const { tokenEnum } = require('./tokenizer.js');
 const { RuntimeError } = require('./RuntimeError.js');
 const { Visitor: ExprVisitor } = require('./Expr.js');
 const { Visitor: StmtVisitor } = require('./Stmt.js');
 const { Environment } = require('./environment.js');
+const { YouthCallable } = require('./callable.js');
 
 const creator = (Base, Mixin) => Mixin(Base);
 const extender = (...Mixins) => Mixins.reduce(creator, class {});
@@ -89,6 +90,26 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return null;
 	}
 
+	visitCallExpr(expr){
+		const callee = this.evaluate(expr.callee);
+
+		const args = [];
+		for (const arg of expr.args){
+			args.push(this.evaluate(arg));
+		}
+		
+		if (!(callee instanceof YouthCallable)){
+			throw new RuntimeError(expr.paren, 'Can only call functions and classes');
+		}
+
+		const func = callee;
+
+		if (args.length !== func.arity()){
+			throw new RuntimeError(expr.paren, `Expected ${func.arity()} arguments but got ${args.length}`);
+		}
+		return func.call(this, args);
+	}
+
 	visitVariableExpr(expr){
 		return this.environment.get(expr.name);
 	}
@@ -147,7 +168,14 @@ class Interpreter extends extender(ExprVisitor, StmtVisitor) {
 
 	constructor() {
 		super();
-		this.environment = new Environment();
+		this.globals = new Environment();
+		this.environment = globals;
+
+		this.globals.define('clock', new YouthCallable({
+			arity: () => 0,
+			call: (interpreter, args) => (Date.now() / 1000.0),
+			toString: () => "<native fn>"
+		}));
 	} 
 
 	evaluate(expr){
