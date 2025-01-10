@@ -13,8 +13,10 @@ class Stmt {
 class Visitor {
   visitBlockStmt(stmt) {}
   visitExpressionStmt(stmt) {}
+  visitIfStmt(stmt) {}
   visitPrintStmt(stmt) {}
   visitVarStmt(stmt) {}
+  visitWhileStmt(stmt) {}
 }
 
 class Block extends Stmt {
@@ -36,6 +38,19 @@ class Expression extends Stmt {
 
   accept(visitor) {
     return visitor.visitExpressionStmt(this);
+  }
+}
+
+class If extends Stmt {
+  constructor(condition, thenBranch, elseBranch) {
+    super();
+    this.condition = condition;
+    this.thenBranch = thenBranch;
+    this.elseBranch = elseBranch;
+  }
+
+  accept(visitor) {
+    return visitor.visitIfStmt(this);
   }
 }
 
@@ -62,10 +77,24 @@ class Var extends Stmt {
   }
 }
 
+class While extends Stmt {
+  constructor(condition, body) {
+    super();
+    this.condition = condition;
+    this.body = body;
+  }
+
+  accept(visitor) {
+    return visitor.visitWhileStmt(this);
+  }
+}
+
 module.exports = {
   Stmt,
+  If,
   Visitor,
   Expression,
   Print,
-  Var
+  Var,
+  While
 };

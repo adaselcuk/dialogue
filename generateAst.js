@@ -13,6 +13,7 @@ function main(args) {
 		"Binary   : left, operator, right",
 		"Grouping : expression",
 		"Literal  : value",
+		"Logical  : left, operator, right",
 		"Unary    : operator, right",
 		"Variable : name"
 		
@@ -21,8 +22,10 @@ function main(args) {
 	defineAst(outputDir, "Stmt", [
 		"Block      : statements",
 		"Expression : expression",
+		"If			: condition, thenBranch, elseBranch",
 		"Print      : expression",
-		"Var		: name, initializer"
+		"Var		: name, initializer",
+		"While		: condition, body"
 	]);
 }
 

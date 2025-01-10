@@ -15,6 +15,18 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return expr.value;
 	}
 
+	visitLogicalExpr(expr){
+		const left = this.evaluate(expr.left);
+
+		if (expr.operator.type === tokenEnum.OR){
+			if (this.isTruthy(left)) return left;
+		} else {
+			if (!this.isTruthy(left)) return left;
+		}
+
+		return this.evaluate(expr.right);
+	}
+
 	visitGroupingExpr(expr){
 		// grouping - the node you get when you have a parenthesized expression
 		return this.evaluate(expr.expression);
@@ -99,6 +111,15 @@ const StmtVisitorMixin = (Base) => class extends Base {
 		return null;
 	}
 
+	visitIfStmt(stmt){
+		if (this.isTruthy(this.evaluate(stmt.condition))){
+			this.execute(stmt.thenBranch);
+		} else if (stmt.elseBranch !== null) {
+			this.execute(stmt.elseBranch);
+		}
+		return null;
+	}
+
 	visitPrintStmt(stmt){
 		const value = this.evaluate(stmt.expression);
 		console.log(this.stringify(value));
@@ -109,6 +130,14 @@ const StmtVisitorMixin = (Base) => class extends Base {
 		let value = null;
 		if (stmt.initializer !== null) value = this.evaluate(stmt.initializer);
 		this.environment.define(stmt.name.lexeme, value);
+		return null;
+	}
+
+	visitWhileStmt(stmt){
+		while (this.isTruthy(this.evaluate(stmt.condition))){
+			this.execute(stmt.body);
+		}
+
 		return null;
 	}
 }
