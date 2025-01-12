@@ -33,7 +33,7 @@ class Parser {
 
 	#declaration(){
 		try {
-			if (this.#match(tokenEnum.LISTEN)) return this.#function('function');
+			if (this.#match(tokenEnum.LISTEN)) return this.#function("function");
 			if (this.#match(typeEnum.IS)) return this.#varDeclaration();
 
 			return this.#statement;
@@ -62,6 +62,7 @@ class Parser {
 
 	#statement() {
 		if (this.#match(tokenEnum.TELL)) return this.#printStatement();
+		if (this.#match(tokenEnum.RETURN)) return this.#returnStatement();
 		if (this.#match(tokenEnum.IF)) return this.#ifStatement();
 		if (this.#match(tokenEnum.WHILE)) return this.#whileStatement();
 
@@ -127,6 +128,18 @@ class Parser {
 		const value = this.#expression();
 		this.#consume(tokenEnum.SEMICOLON, 'Expect ";" after value.');
 		return new Stmt.Print(value);
+	}
+
+	#returnStatement() {
+		const keyword = this.#previous();
+		let value = null;
+
+		if (!this.#check(tokenEnum.SEMICOLON)){
+			value = this.#expression();
+		}
+
+		this.#consume(tokenEnum.SEMICOLON, 'Expect ";" after return value.');
+		return new Stmt.Return(keyword, value);
 	}
 
 	#expressionStatement() {

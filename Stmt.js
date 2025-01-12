@@ -16,6 +16,7 @@ class Visitor {
   visitFunctionStmt(stmt) {}
   visitIfStmt(stmt) {}
   visitPrintStmt(stmt) {}
+  visitReturnStmt(stmt) {}
   visitVarStmt(stmt) {}
   visitWhileStmt(stmt) {}
 }
@@ -79,6 +80,18 @@ class Print extends Stmt {
   }
 }
 
+class Return extends Stmt {
+  constructor(keyword, value) {
+    super();
+    this.keyword = keyword;
+    this.value = value;
+  }
+
+  accept(visitor) {
+    return visitor.visitReturnStmt(this);
+  }
+}
+
 class Var extends Stmt {
   constructor(name, initializer) {
     super();
@@ -110,5 +123,6 @@ Stmt.If = If;
 Stmt.Print = Print;
 Stmt.Var = Var;
 Stmt.While = While;
+Stmt.Return = Return;
 
 module.exports = { Stmt, Visitor };

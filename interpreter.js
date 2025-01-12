@@ -132,6 +132,12 @@ const StmtVisitorMixin = (Base) => class extends Base {
 		return null;
 	}
 
+	visitFunctionStmt(stmt){
+		const func = new YouthFunction(stmt, environment);
+		this.environment.define(stmt.name.lexeme, func);
+		return null;
+	}
+
 	visitIfStmt(stmt){
 		if (this.isTruthy(this.evaluate(stmt.condition))){
 			this.execute(stmt.thenBranch);
@@ -145,6 +151,13 @@ const StmtVisitorMixin = (Base) => class extends Base {
 		const value = this.evaluate(stmt.expression);
 		console.log(this.stringify(value));
 		return null;
+	}
+
+	visitReturnStmt(stmt){
+		let value = null;
+		if (stmt.value !== null) value = this.evaluate(stmt.value);
+
+		throw new Return(value);
 	}
 
 	visitVarStmt(stmt){

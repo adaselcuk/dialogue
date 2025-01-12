@@ -10,3 +10,5 @@ class YouthCallable {
 		return this.arity;
 	}
 }
+
+module.exports = YouthCallable;
