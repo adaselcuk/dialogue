@@ -10,6 +10,23 @@ class Environment {
 		this.#values[name] = value;
 	}
 
+	ancestor(distance){
+		let environment = this;
+		for (let i = 0; i < distance; i++){
+			environment = environment.enclosing;
+		}
+
+		return environment;
+	}
+
+	getAt(distance, name){
+		return this.ancestor(distance).#values[name];
+	}
+
+	assignAt(distance, name, value){
+		this.ancestor(distance).#values[name] = value;
+	}
+
 	get(name){
 		if (this.#values[name.lexeme]) return this.#values[name.lexeme];
 

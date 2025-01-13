@@ -1,4 +1,5 @@
-const { Expr, Visitor } = require('./Expr.js');
+const { Expr } = require('./Expr.js');
+const { Stmt } = require('./Stmt.js');
 const { tokenEnum } = require('./tokenizer.js');
 const { RuntimeError } = require('./RuntimeError.js');
 const { Visitor: ExprVisitor } = require('./Expr.js');
@@ -111,12 +112,28 @@ const ExprVisitorMixin = (Base) => class extends Base {
 	}
 
 	visitVariableExpr(expr){
-		return this.environment.get(expr.name);
+		return this.lookUpVariable(expr.name, expr);
+	}
+
+	lookUpVariable(name, expr){
+		const distance = this.locals.get(expr);
+		if (distance !== null){
+			return this.environment.getAt(distance, name.lexeme);
+		} else {
+			return this.globals.get(name);
+		}
 	}
 
 	visitAssignExpr(expr){
 		const value = this.evaluate(expr.value);
-		this.environment.assign(expr.name, value);
+
+		const distance = this.locals.get(expr);
+		if (distance !== null){
+			this.environment.assignAt(distance, expr.name, value);
+		} else {
+			this.globals.assign(expr.name, value);
+		}
+		
 		return value;
 	}
 }
@@ -178,6 +195,7 @@ const StmtVisitorMixin = (Base) => class extends Base {
 
 class Interpreter extends extender(ExprVisitor, StmtVisitor) {
 	environment;
+	locals = new Map();
 
 	constructor() {
 		super();
@@ -197,6 +215,10 @@ class Interpreter extends extender(ExprVisitor, StmtVisitor) {
 
 	execute(stmt){
 		return stmt.accept(this);
+	}
+
+	resolve(expr, depth){
+		this.locals.set(expr, depth);
 	}
 
 	executeBlock(statements, environment){

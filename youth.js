@@ -5,8 +5,10 @@ const readline = require('readline');
 const { tokenEnum } = require('./tokenizer.js');
 const {AstPrinter} = require('./printer.js');
 const { Interpreter } = require('./interpreter.js');
-const { Scanner } = require('./scanner.js');
+const { Scanner } = require('./tokenizer.js');
 const { Parser } = require('./parser.js');
+const { tokenEnum } = require('./tokenizer.js');
+const { Resolver } = require('./resolver.js');
 
 
 class Youth {
@@ -69,6 +71,12 @@ class Youth {
 
 		const parser = new Parser(tokens);
 		const statements = parser.parse();
+
+		if (this.hadError) return;
+		if (this.hadRuntimeError) return;
+
+		const resolver = new Resolver(this.#interpreter);
+		resolver.resolve(statements);
 
 		if (this.hadError) return;
 		if (this.hadRuntimeError) return;
