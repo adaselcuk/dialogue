@@ -12,6 +12,7 @@ class Stmt {
 
 class Visitor {
   visitBlockStmt(stmt) {}
+  visitClassStmt(stmt) {}
   visitExpressionStmt(stmt) {}
   visitFunctionStmt(stmt) {}
   visitIfStmt(stmt) {}
@@ -29,6 +30,18 @@ class Block extends Stmt {
 
   accept(visitor) {
     return visitor.visitBlockStmt(this);
+  }
+}
+
+class Class extends Stmt {
+  constructor(name, methods) {
+    super();
+    this.name = name;
+    this.methods = methods;
+  }
+
+  accept(visitor) {
+    return visitor.visitClassStmt(this);
   }
 }
 
@@ -117,6 +130,7 @@ class While extends Stmt {
 }
 
 Stmt.Block = Block;
+Stmt.Class = Class;
 Stmt.Expression = Expression;
 Stmt.Function = Function;
 Stmt.If = If;

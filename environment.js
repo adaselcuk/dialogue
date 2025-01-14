@@ -1,3 +1,5 @@
+const { RuntimeError } = require('./errors');
+
 class Environment {
 	#values;
 

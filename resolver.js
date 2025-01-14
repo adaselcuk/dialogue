@@ -32,6 +32,12 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 		return null;
 	}
 
+	visitClassStmt(stmt){
+		this.#declare(stmt.name);
+		this.#define(stmt.name);
+		return null;
+	}
+
 	visitExpressionStmt(stmt){
 		this.#resolveExpr(stmt.expression);
 		return null;
@@ -104,6 +110,11 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 		return null;
 	}
 
+	visitGetExpr(expr){
+		this.#resolveExpr(expr.object);
+		return null;
+	}
+
 	visitGroupingExpr(expr){
 		this.#resolveExpr(expr.expression);
 		return null;
@@ -116,6 +127,12 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 	visitLogicalExpr(expr){
 		this.#resolveExpr(expr.left);
 		this.#resolveExpr(expr.right);
+		return null;
+	}
+
+	visitSetExpr(expr){
+		this.#resolveExpr(expr.value);
+		this.#resolveExpr(expr.object);
 		return null;
 	}
 

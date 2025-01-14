@@ -29,6 +29,18 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return this.evaluate(expr.right);
 	}
 
+	visitSrtExpr(expr){
+		const object = this.locals.get(expr);
+
+		if (!(object instanceof YouthInstance)){
+			throw new RuntimeError(expr.name, 'Only instances have methods');
+		}
+
+		const value = this.evaluate(expr.value);
+		object.set(expr.name, value);
+		return value;
+	}
+
 	visitGroupingExpr(expr){
 		// grouping - the node you get when you have a parenthesized expression
 		return this.evaluate(expr.expression);
@@ -111,6 +123,15 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return func.call(this, args);
 	}
 
+	visitGetExpr(expr){
+		const object = this.evaluate(expr.object);
+		if (object instanceof YouthInstance){
+			return object.get(expr.name);
+		}
+
+		throw new RuntimeError(expr.name, 'Only instances have properties');
+	}
+
 	visitVariableExpr(expr){
 		return this.lookUpVariable(expr.name, expr);
 	}
@@ -141,6 +162,13 @@ const ExprVisitorMixin = (Base) => class extends Base {
 const StmtVisitorMixin = (Base) => class extends Base {
 	visitBlockStmt(stmt){
 		this.executeBlock(stmt.statements, new Environment(this.environment));
+		return null;
+	}
+
+	visitClassStmt(stmt){
+		this.environment.define(stmt.name.lexeme, null);
+		const klass = new YouthClass(stmt.name.lexeme);
+		this.environment.assign(stmt.name, klass);
 		return null;
 	}
 

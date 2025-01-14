@@ -12,9 +12,11 @@ function main(args) {
 		"Assign   : name, value",
 		"Binary   : left, operator, right",
 		"Call	  : callee, paren, args",
+		"Get	  : object, name",
 		"Grouping : expression",
 		"Literal  : value",
 		"Logical  : left, operator, right",
+		"Set	  : object, name, value",
 		"Unary    : operator, right",
 		"Variable : name"
 		
@@ -22,6 +24,7 @@ function main(args) {
 
 	defineAst(outputDir, "Stmt", [
 		"Block      : statements",
+		"Class	    : name, methods",
 		"Expression : expression",
 		"Function   : name, params, body",
 		"If			: condition, thenBranch, elseBranch",

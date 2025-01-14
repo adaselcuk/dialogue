@@ -6,7 +6,7 @@
 // no associated behaviour
 
 const { tokenEnum } = require('./tokenizer');
-const { error } = require('./errors');
+const { RuntimeError } = require('./errors');
 const { Youth } = require('./youth');
 const { Stmt, Visitor } = require('./Stmt.js');
 const { Expr, Visitor} = require('./Expr.js');
@@ -33,6 +33,7 @@ class Parser {
 
 	#declaration(){
 		try {
+			if (this.#match(tokenEnum.TOGETHER)) return this.#classDeclaration();
 			if (this.#match(tokenEnum.LISTEN)) return this.#function("function");
 			if (this.#match(typeEnum.IS)) return this.#varDeclaration();
 
@@ -41,6 +42,20 @@ class Parser {
 			this.#synchronize();
 			return null;
 		}
+	}
+
+	#classDeclaration(){
+		const name = this.#consume(tokenEnum.IDENTIFIER, 'Expect class name.');
+
+		this.#consume(tokenEnum.LEFT_BRACE, 'Expect "{" before class body.');
+
+		const methods = [];
+		while (!this.#check(tokenEnum.RIGHT_BRACE) && !this.#isAtEnd()){
+			methods.push(this.#function('method'));
+		}
+
+		this.#consume(tokenEnum.RIGHT_BRACE, 'Expect "}" after class body.');
+		return new Stmt.Class(name, methods);
 	}
 
 	#varDeclaration(){
@@ -203,6 +218,8 @@ class Parser {
 			if (expr instanceof Expr.Variable){
 				const name = expr.name;
 				return new Expr.Assign(name, value);
+			} else if (expr instanceof Expr.Get){
+				return new Expr.Set(expr.object, expr.name, value);
 			}
 
 			this.#error(equals, 'Invalid assignment target.');
@@ -350,6 +367,9 @@ class Parser {
 		while (true){
 			if (this.#match(tokenEnum.LEFT_PAREN)){
 				expr = this.#finishCall(expr);
+			} else if (this.#match(tokenEnum.DOT)){
+				const name = this.#consume(tokenEnum.IDENTIFIER, 'Expect property name after ".".');
+				expr = new Expr.Get(expr, name);
 			} else {
 				break;
 			}
