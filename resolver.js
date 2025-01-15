@@ -6,7 +6,8 @@ const extender = (...Mixins) => Mixins.reduce(creator, class {});
 
 const FunctionType = {
 	NONE: 'NONE',
-	FUNCTION: 'FUNCTION'
+	FUNCTION: 'FUNCTION',
+	METHOD: 'METHOD'
 }
 
 class Resolver extends extender(ExprVisitor, StmtVisitor){
@@ -35,6 +36,11 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 	visitClassStmt(stmt){
 		this.#declare(stmt.name);
 		this.#define(stmt.name);
+
+		for (const method of stmt.methods){
+			const declaration = FunctionType.METHOD;
+			this.#resolveFunction(method, declaration);
+		}
 		return null;
 	}
 

@@ -29,7 +29,7 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return this.evaluate(expr.right);
 	}
 
-	visitSrtExpr(expr){
+	visitSetExpr(expr){
 		const object = this.locals.get(expr);
 
 		if (!(object instanceof YouthInstance)){
@@ -167,7 +167,14 @@ const StmtVisitorMixin = (Base) => class extends Base {
 
 	visitClassStmt(stmt){
 		this.environment.define(stmt.name.lexeme, null);
-		const klass = new YouthClass(stmt.name.lexeme);
+
+		const methods = new Map();
+		for (const method of stmt.methods){
+			const func = new YouthFunction(method, this.environment);
+			methods.set(method.name.lexeme, func);
+		}
+
+		const klass = new YouthClass(stmt.name.lexeme, methods);
 		this.environment.assign(stmt.name, klass);
 		return null;
 	}
