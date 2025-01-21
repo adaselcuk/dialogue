@@ -9,6 +9,14 @@ class YouthClass extends YouthCallable{
 		this.#methods = methods;
 	}
 
+	findMethod(name) {
+		if (this.#methods.has(name)) {
+			return this.#methods.get(name);
+		}
+
+		return null;
+	}
+
 	toString(){
 		return this.name;
 	}

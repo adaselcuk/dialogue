@@ -21,6 +21,7 @@ class Visitor {
   visitLiteralExpr(expr) {}
   visitLogicalExpr(expr) {}
   visitSetExpr(expr) {}
+  visitThisExpr(expr) {}
   visitUnaryExpr(expr) {}
   visitVariableExpr(expr) {}
 }
@@ -120,6 +121,16 @@ class Set extends Expr {
   }
 }
 
+class This extends Expr {
+  constructor(keyword) {
+    super();
+    this.keyword = keyword;
+  }
+
+  accept(visitor){
+    return visitor.visitThisExpr(this);
+  }
+}
 
 class Unary extends Expr {
   constructor(operator, right) {
@@ -152,6 +163,7 @@ Expr.Grouping = Grouping;
 Expr.Literal = Literal;
 Expr.Logical = Logical;
 Expr.Set = Set;
+Expr.This = This;
 Expr.Unary = Unary;
 
 

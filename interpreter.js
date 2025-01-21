@@ -41,6 +41,10 @@ const ExprVisitorMixin = (Base) => class extends Base {
 		return value;
 	}
 
+	visitThisExpr(expr){
+		return this.lookUpVariable(expr.keyword, expr);
+	}
+
 	visitGroupingExpr(expr){
 		// grouping - the node you get when you have a parenthesized expression
 		return this.evaluate(expr.expression);

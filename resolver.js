@@ -10,10 +10,16 @@ const FunctionType = {
 	METHOD: 'METHOD'
 }
 
+const ClassType = {
+	NONE: 'NONE',
+	CLASS: 'CLASS'
+}
+
 class Resolver extends extender(ExprVisitor, StmtVisitor){
 	#interpreter
 	#scopes = [];
 	#currentFunction = FunctionType.NONE;
+	#currentClass = ClassType.NONE;
 
 	constructor(interpreter){
 		super();
@@ -34,13 +40,23 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 	}
 
 	visitClassStmt(stmt){
+		const enclosingClass = this.#currentClass;
+		this.#currentClass = ClassType.CLASS;
+
 		this.#declare(stmt.name);
 		this.#define(stmt.name);
+
+		this.beginScope();
+		this.#scopes[this.#scopes.length - 1].set('this', true);
 
 		for (const method of stmt.methods){
 			const declaration = FunctionType.METHOD;
 			this.#resolveFunction(method, declaration);
 		}
+
+		this.endScope();
+		this.#currentClass = enclosingClass;
+
 		return null;
 	}
 
@@ -139,6 +155,15 @@ class Resolver extends extender(ExprVisitor, StmtVisitor){
 	visitSetExpr(expr){
 		this.#resolveExpr(expr.value);
 		this.#resolveExpr(expr.object);
+		return null;
+	}
+
+	visitThisExpr(expr){
+		if (this.#currentClass === ClassType.NONE){
+			Youth.error(expr.keyword, `Cannot use 'this' outside of a class.`);
+			return null;
+		}
+		this.#resolveExpr(expr.keyword);
 		return null;
 	}
 

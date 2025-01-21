@@ -22,6 +22,7 @@ const tokenType = `
 	NUMBER,
 
 	AND, OR,
+	THIS, // this
 	IS, // assignment 
 	AM, // equality
 	TOGETHER, // class declaration
@@ -44,6 +45,7 @@ tokenType.forEach((token, i) => tokenEnum[token] = i);
 const keywords = {
 	and: tokenEnum.AND,
 	or: tokenEnum.OR,
+	this: tokenEnum.THIS,
 	is: tokenEnum.IS,
 	am: tokenEnum.AM,
 	together: tokenEnum.TOGETHER,

@@ -387,6 +387,8 @@ class Parser {
 			return new Expr.Literal(this.#previous().literal);
 		}
 
+		if (this.#match(tokenEnum.THIS)) return new Expr.This(this.#previous());
+
 		if (this.#match(tokenEnum.IDENTIFIER)) {
 			return new Expr.Variable(this.#previous());
 		}

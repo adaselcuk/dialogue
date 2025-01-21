@@ -11,6 +11,12 @@ class YouthFunction extends YouthCallable {
 		this.#closure = closure;
 	}
 
+	bind(instance){
+		const environment = new Environment(this.#closure);
+		environment.define('this', instance);
+		return new YouthFunction(this.#declaration, environment);
+	}
+
 	call(interpreter, args){
 		const environment = new Environment(this.#closure);
 		for (let i = 0; i < this.#declaration.params.length; i++){
